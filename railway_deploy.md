@@ -22,7 +22,7 @@ Your project is already ready! You have:
 
 ### 3. Deploy Your App
 1. Choose "Deploy from GitHub repo"
-2. Select your repository: `EmilOmadsen/yessir`
+2. Select your repository: `EmilOmadsen/playlist_to_webhook`
 3. Railway will automatically detect it's a Python app
 
 ### 4. Set Environment Variables
@@ -30,9 +30,9 @@ In Railway dashboard, add these variables:
 ```
 SPOTIFY_CLIENT_ID=d7a59142072e4223a5e94195be60a1d5
 SPOTIFY_CLIENT_SECRET=ef91d4916f9249f985d4bbd545473541
-PORT=8080
+SECRET_KEY=your-secret-key-change-this-12345
 PUBLIC=true
-SECRET_KEY=your-secret-key-change-this
+REDIRECT_URI=https://your-app-name.railway.app/callback
 ```
 
 ### 5. Update Spotify Redirect URI

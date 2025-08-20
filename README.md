@@ -41,6 +41,7 @@ A Flask web application that generates mixed playlists from Spotify search resul
    - Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
    - Create a new app or use existing one
    - Add redirect URI: `http://127.0.0.1:3000/callback` (for local testing)
+   - For production: Add `https://your-app-name.railway.app/callback`
    - Note your Client ID and Client Secret
 
 4. **Configure environment variables**
@@ -64,6 +65,12 @@ The application will run on `http://127.0.0.1:3000`
 ```bash
 PORT=3001 python3 app.py
 ```
+
+### Production Deployment (Railway)
+1. **Deploy to Railway**: Follow the guide in `railway_deploy.md`
+2. **Set Environment Variables**: Configure in Railway dashboard
+3. **Update Spotify Redirect URI**: Add your Railway URL
+4. **Access**: Your app will be available at `https://your-app-name.railway.app`
 
 ## 🧪 Testing
 
