@@ -34,8 +34,14 @@ if not os.getenv('SPOTIFY_CLIENT_SECRET'):
     print("🔧 Set SPOTIFY_CLIENT_SECRET from hardcoded value")
 if not os.getenv('REDIRECT_URI'):
     print("⚠️  REDIRECT_URI not found in environment")
-    os.environ['REDIRECT_URI'] = 'http://127.0.0.1:3001/callback'
-    print("🔧 Set REDIRECT_URI from hardcoded value")
+    # Use Railway URL if available, otherwise local
+    railway_url = os.getenv('RAILWAY_STATIC_URL')
+    if railway_url:
+        os.environ['REDIRECT_URI'] = f'{railway_url}/callback'
+        print(f"🔧 Set REDIRECT_URI from Railway URL: {os.environ['REDIRECT_URI']}")
+    else:
+        os.environ['REDIRECT_URI'] = 'http://127.0.0.1:3000/callback'
+        print("🔧 Set REDIRECT_URI from hardcoded value")
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-change-this')
