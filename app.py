@@ -35,16 +35,17 @@ if not os.getenv('SPOTIFY_CLIENT_SECRET'):
 if not os.getenv('REDIRECT_URI'):
     print("⚠️  REDIRECT_URI not found in environment")
     # Use Railway URL if available, otherwise local
-    railway_url = os.getenv('RAILWAY_STATIC_URL') or os.getenv('RAILWAY_PUBLIC_DOMAIN')
-    if railway_url:
-        os.environ['REDIRECT_URI'] = f'https://{railway_url}/callback'
-        print(f"🔧 Set REDIRECT_URI from Railway URL: {os.environ['REDIRECT_URI']}")
+    railway_url = os.getenv('RAILWAY_STATIC_URL') or os.getenv('RAILWAY_PUBLIC_DOMAIN') or os.getenv('PORT')
+    if railway_url and railway_url != '3000':
+        # We're on Railway, construct the URL
+        os.environ['REDIRECT_URI'] = 'https://web-production-84ce1.up.railway.app/callback'
+        print(f"🔧 Set REDIRECT_URI for Railway: {os.environ['REDIRECT_URI']}")
     else:
         os.environ['REDIRECT_URI'] = 'http://127.0.0.1:3000/callback'
         print("🔧 Set REDIRECT_URI from hardcoded value")
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-change-this')
+app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-change-this-12345')
 
 # RAILWAY DEPLOYMENT DEBUG - This should force a redeploy
 print("🚂 RAILWAY DEPLOYMENT: App starting with new code!")
@@ -60,12 +61,15 @@ class SpotifyPlaylistGenerator:
         try:
             scope = "playlist-read-private playlist-modify-public playlist-modify-private user-library-read user-read-private"
             
+            # Use memory cache for Railway deployment (no file system access)
+            cache_handler = spotipy.cache_handler.MemoryCacheHandler()
+            
             self.auth_manager = SpotifyOAuth(
                 client_id=client_id,
                 client_secret=client_secret,
                 redirect_uri=redirect_uri,
                 scope=scope,
-                cache_handler=spotipy.cache_handler.CacheFileHandler(cache_path=".spotify_cache")
+                cache_handler=cache_handler
             )
             
             # Check if we have a valid token
@@ -670,20 +674,35 @@ def login():
 def callback():
     """Handle Spotify OAuth callback"""
     try:
+        # Debug: Print all request arguments
+        print(f"🔍 Callback received with args: {dict(request.args)}")
+        print(f"🔍 Current redirect URI: {os.getenv('REDIRECT_URI')}")
+        
         code = request.args.get('code')
+        error = request.args.get('error')
+        
+        if error:
+            print(f"❌ Spotify returned error: {error}")
+            return jsonify({'error': f'Spotify authentication error: {error}'}), 400
+        
         if code:
+            print(f"✅ Authorization code received: {code[:10]}...")
             if generator.handle_callback(code):
                 # Store user info in session
                 user_info = generator.sp.current_user()
                 session['user_id'] = user_info['id']
                 session['user_name'] = user_info['display_name']
+                print(f"✅ User authenticated successfully: {user_info['display_name']}")
                 return redirect(url_for('dashboard'))
             else:
+                print("❌ Callback authentication failed")
                 return jsonify({'error': 'Authentication failed'}), 500
         else:
+            print("❌ No authorization code received")
             return jsonify({'error': 'No authorization code received'}), 400
             
     except Exception as e:
+        print(f"❌ Callback exception: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/logout')
